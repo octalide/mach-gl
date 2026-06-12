@@ -32,7 +32,7 @@ loader the consumer provides (`glfwGetProcAddress` or any equivalent), so
 ```toml
 [deps.mach-gl]
 git = "https://github.com/octalide/mach-gl"
-ref = "v0.1.0"
+ref = "branch/main"
 ```
 
 ## Goals
@@ -71,8 +71,8 @@ tools/
   gen.py        registry generator; emits all generated sources
   gl.xml        pinned Khronos registry snapshot
 examples/
-  demo/         standalone example project (path dep on mach-gl,
-                git dep on mach-glfw): shader + VAO/VBO triangle
+  demo/         standalone example project (git deps on mach-gl and
+                mach-glfw): shader + VAO/VBO triangle
 ```
 
 ### Raw layer — `gl.c`
@@ -82,8 +82,11 @@ context's proc loader. The raw layer is therefore a table of module-level
 function pointers, one per command, with the C name and C-faithful signature:
 
 ```mach
-pub var glClear: fun(u32) = nil;
+pub var glClear: fun(u32);
 ```
+
+The pointer is default-initialized (zeroed), which reads as `nil` and is the
+[one toolchain deviation](#toolchain-notes) from a literal `= nil`.
 
 `load` fills the table from a caller-supplied loader. Commands the running
 context does not export stay `nil`; calling one is the same contract as in C
@@ -135,10 +138,16 @@ adding information.
 
 ### Library surface — `gl.gl`
 
-`gl.mach` re-exports every public symbol of `enums` and `cmd` (not `c`; the
-raw table stays reachable as `gl.c.glClear` for anyone who wants C names).
-`[project].module = "gl.mach"` makes a bare `use gl;` resolve to it:
-`gl.load(...)`, `gl.clear(...)`, `gl.COLOR_BUFFER_BIT`.
+`gl.mach` re-exports every public symbol of `enums` and `cmd`, plus `c` as a
+module (`fwd gl.c;`) so the raw table stays reachable as `gl.c.glClear` for
+anyone who wants C names. `[project].module = "gl.mach"` makes a bare
+`use gl;` resolve to it: `gl.load(...)`, `gl.clear(...)`,
+`gl.COLOR_BUFFER_BIT`. The project is a `[lib.gl]` artifact entered through
+that surface; the surface also carries `use std.runtime;` so a library
+`mach test` links a runnable binary.
+
+The convenience helper `version(?major, ?minor)` is generated into `cmd.mach`
+(sugar over `get_integerv(MAJOR_VERSION/MINOR_VERSION)`, valid after `load`).
 
 ### Generator
 
@@ -158,7 +167,26 @@ Paths that need a live context are exercised by the demo, not `mach test`.
 
 ## Demo
 
-`examples/demo` is its own Mach project (path dep on `../..`, git dep on
-mach-glfw) so the binding itself never depends on a context provider. It
-renders the classic triangle: compiled shaders, VAO/VBO, uniform animation,
-ESC to close.
+`examples/demo` is its own Mach project (git deps on mach-gl and mach-glfw,
+tracking `branch/main`) so the binding itself never depends on a context
+provider. It opens a 3.3 core-profile context, `gl.load`s through glfw's proc
+loader, compiles a shader program, uploads a triangle to a VAO/VBO, animates
+the fill color, and closes on window close or ESC. It cannot run headless;
+building it (`mach build` in `examples/demo`) is the verification.
+
+## Toolchain notes
+
+- **Function pointers are not `nil`-assignable**
+  ([octalide/mach#1369](https://github.com/octalide/mach/issues/1369)).
+  `pub var glClear: fun(u32) = nil;` is rejected by the type checker (`nil` is
+  not assignable to a function type); `mach check` accepts it best-effort but
+  a full build does not. The raw layer therefore declares each pointer
+  default-initialized (`pub var glClear: fun(u32);`), which zero-inits to a
+  `nil`-reading, assignable, callable function pointer. This is the only
+  deviation from the binding spec above and the reason the raw-layer snippet
+  drops `= nil`.
+- **`mach dep pull` silently ignores `path` dependencies**
+  ([octalide/mach#1370](https://github.com/octalide/mach/issues/1370)): the
+  dep is never materialized into `dep/<alias>/`, which the build requires.
+  The demo therefore depends on mach-gl over git rather than a `path` dep on
+  `../..`; a local checkout is one `ref` edit away if the fix lands.
