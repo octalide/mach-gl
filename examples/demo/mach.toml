@@ -1,7 +1,6 @@
 [project]
-id      = "gl"
+id      = "demo"
 version = "0.1.0"
-module  = "gl.mach"
 target  = "native"
 src     = "src"
 dep     = "dep"
@@ -13,19 +12,16 @@ isa = "x86_64"
 os  = "linux"
 abi = "sysv64"
 
-[target.windows]
-isa = "x86_64"
-os  = "windows"
-abi = "win64"
-ext = ".exe"
+[bin.demo]
+entry = "main.mach"
 
-[target.darwin]
-isa = "x86_64"
-os  = "darwin"
-abi = "sysv64"
+[deps.mach-gl]
+git = "https://github.com/octalide/mach-gl"
+ref = "branch/main"
 
-[lib.gl]
-entry = "gl.mach"
+[deps.mach-glfw]
+git = "https://github.com/octalide/mach-glfw"
+ref = "branch/main"
 
 [deps.mach-std]
 git = "https://github.com/octalide/mach-std"
