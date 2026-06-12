@@ -1,6 +1,7 @@
 [project]
 id      = "gl"
 version = "0.1.0"
+module  = "gl.mach"
 target  = "native"
 src     = "src"
 dep     = "dep"
@@ -22,6 +23,9 @@ ext = ".exe"
 isa = "x86_64"
 os  = "darwin"
 abi = "sysv64"
+
+[lib.gl]
+entry = "gl.mach"
 
 [deps.mach-std]
 git = "https://github.com/octalide/mach-std"

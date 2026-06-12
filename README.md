@@ -82,8 +82,11 @@ context's proc loader. The raw layer is therefore a table of module-level
 function pointers, one per command, with the C name and C-faithful signature:
 
 ```mach
-pub var glClear: fun(u32) = nil;
+pub var glClear: fun(u32);
 ```
+
+The pointer is default-initialized (zeroed), which reads as `nil` and is the
+[one toolchain deviation](#toolchain-notes) from a literal `= nil`.
 
 `load` fills the table from a caller-supplied loader. Commands the running
 context does not export stay `nil`; calling one is the same contract as in C
@@ -135,10 +138,16 @@ adding information.
 
 ### Library surface — `gl.gl`
 
-`gl.mach` re-exports every public symbol of `enums` and `cmd` (not `c`; the
-raw table stays reachable as `gl.c.glClear` for anyone who wants C names).
-`[project].module = "gl.mach"` makes a bare `use gl;` resolve to it:
-`gl.load(...)`, `gl.clear(...)`, `gl.COLOR_BUFFER_BIT`.
+`gl.mach` re-exports every public symbol of `enums` and `cmd`, plus `c` as a
+module (`fwd gl.c;`) so the raw table stays reachable as `gl.c.glClear` for
+anyone who wants C names. `[project].module = "gl.mach"` makes a bare
+`use gl;` resolve to it: `gl.load(...)`, `gl.clear(...)`,
+`gl.COLOR_BUFFER_BIT`. The project is a `[lib.gl]` artifact entered through
+that surface; the surface also carries `use std.runtime;` so a library
+`mach test` links a runnable binary.
+
+The convenience helper `version(?major, ?minor)` is generated into `cmd.mach`
+(sugar over `get_integerv(MAJOR_VERSION/MINOR_VERSION)`, valid after `load`).
 
 ### Generator
 
@@ -162,3 +171,13 @@ Paths that need a live context are exercised by the demo, not `mach test`.
 mach-glfw) so the binding itself never depends on a context provider. It
 renders the classic triangle: compiled shaders, VAO/VBO, uniform animation,
 ESC to close.
+
+## Toolchain notes
+
+- **Function pointers are not `nil`-assignable.** `pub var glClear: fun(u32) =
+  nil;` is rejected by the type checker (`nil` is not assignable to a function
+  type); `mach check` accepts it best-effort but a full build does not. The
+  raw layer therefore declares each pointer default-initialized
+  (`pub var glClear: fun(u32);`), which zero-inits to a `nil`-reading,
+  assignable, callable function pointer. This is the only deviation from the
+  spec above and the reason the raw-layer snippet drops `= nil`.
