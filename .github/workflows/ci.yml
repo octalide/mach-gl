@@ -13,15 +13,36 @@ env:
 jobs:
   generate:
     name: Generation drift
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Check generated sources against the registry
         run: python3 tools/gen.py check
 
-  build:
-    name: Build and test
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch released mach
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$MACH_VERSION" -R octalide/mach -p mach -D /usr/local/bin
+          chmod +x /usr/local/bin/mach
+
+      - name: Sync dependencies
+        run: mach dep pull
+
+      # the binding links nothing: no system GL, no glfw, no display.
+      - name: Test
+        run: mach test
+
+  demo:
+    name: Demo Build
+    # ubuntu 24.04 ships GLFW 3.4, which carries the symbols mach-glfw references
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -33,22 +54,26 @@ jobs:
           gh release download "$MACH_VERSION" -R octalide/mach -p mach -D /usr/local/bin
           chmod +x /usr/local/bin/mach
 
-      # the triangle binary links glfw, and mach has no per-artifact deps, so
-      # the library test build inherits the same link requirement. ubuntu 24.04
-      # ships GLFW 3.4, which carries the symbols mach-glfw references.
       - name: Install GLFW
         run: |
           sudo apt-get update
           sudo apt-get install -y libglfw3-dev
 
-      - name: Sync dependencies
+      # STOPGAP for octalide/mach#1370: `mach dep pull` silently ignores path
+      # dependencies, so the demo's `path = "../.."` dep on mach-gl is never
+      # materialized into dep/mach-gl. symlink it by hand until the fix lands.
+      - name: Materialize the path dep (mach#1370 stopgap)
+        run: |
+          mkdir -p examples/demo/dep
+          ln -s ../../.. examples/demo/dep/mach-gl
+
+      - name: Sync demo dependencies
+        working-directory: examples/demo
         run: mach dep pull
 
-      - name: Test the library
-        run: mach test --lib gl
-
-      - name: Build the library and demo
+      - name: Build demo
+        working-directory: examples/demo
         run: |
           set -euo pipefail
           mach build
-          test -x out/linux/bin/triangle || { echo "::error::mach build produced no triangle binary"; exit 1; }
+          test -x out/linux/bin/demo || { echo "::error::mach build produced no demo binary"; exit 1; }

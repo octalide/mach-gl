@@ -24,13 +24,10 @@ fun example() {
 }
 ```
 
-Consuming projects vendor the bindings as a normal Mach dependency. The
-binding layers themselves declare no `libs`: every GL command is resolved at
-runtime through a loader the consumer provides (`glfwGetProcAddress` or any
-equivalent). The bundled triangle binary depends on `mach-glfw` for its
-context, which — because mach has no per-artifact dependencies — cascades a
-`glfw` link requirement onto the whole project (see
-[Toolchain notes](#toolchain-notes)).
+Consuming projects vendor the bindings as a normal Mach dependency. There is
+no system link requirement: every GL command is resolved at runtime through a
+loader the consumer provides (`glfwGetProcAddress` or any equivalent), so
+`mach-gl` declares no `libs` and forces none on consumers.
 
 ```toml
 [deps.mach-gl]
@@ -70,11 +67,12 @@ src/
   enums.mach    constants (generated): every core enum, GL_ prefix stripped
   cmd.mach      idiomatic layer (generated): snake_case wrappers over c.*
   gl.mach       library surface (generated): forwards every public symbol
-  triangle.mach demo binary (hand-written): shader + VAO/VBO triangle over
-                mach-glfw; the project's one [bin] artifact
 tools/
   gen.py        registry generator; emits all generated sources
   gl.xml        pinned Khronos registry snapshot
+examples/
+  demo/         standalone example project (path dep on mach-gl,
+                git dep on mach-glfw): shader + VAO/VBO triangle
 ```
 
 ### Raw layer — `gl.c`
@@ -169,31 +167,30 @@ Paths that need a live context are exercised by the demo, not `mach test`.
 
 ## Demo
 
-`src/triangle.mach` is the project's one `[bin.triangle]` artifact, built with
-`mach build` (it cannot be exercised headless). It opens a 3.3 core-profile
-context with mach-glfw, `gl.load`s through glfw's proc loader, compiles a
-shader program, uploads a triangle to a VAO/VBO, animates the fill color, and
-closes on window close or ESC — living documentation of `load()`, the wrapper
-idioms, and mach-glfw interop. It depends on a `glfw` system library at link
-time; the binding layers do not.
+`examples/demo` is its own Mach project (path dep on `../..`, git dep on
+mach-glfw) so the binding itself never depends on a context provider. It
+opens a 3.3 core-profile context, `gl.load`s through glfw's proc loader,
+compiles a shader program, uploads a triangle to a VAO/VBO, animates the fill
+color, and closes on window close or ESC. It cannot run headless; building it
+(`mach build` in `examples/demo`) is the verification.
+
+Until [octalide/mach#1370](https://github.com/octalide/mach/issues/1370) is
+fixed, materialize the path dep by hand before building:
+`ln -s ../../.. examples/demo/dep/mach-gl`.
 
 ## Toolchain notes
 
-- **Function pointers are not `nil`-assignable.** `pub var glClear: fun(u32) =
-  nil;` is rejected by the type checker (`nil` is not assignable to a function
-  type); `mach check` accepts it best-effort but a full build does not. The
-  raw layer therefore declares each pointer default-initialized
-  (`pub var glClear: fun(u32);`), which zero-inits to a `nil`-reading,
-  assignable, callable function pointer. This is the only deviation from the
-  binding spec above and the reason the raw-layer snippet drops `= nil`.
-- **Dependencies are project-wide, not per-artifact.** mach has no per-`[bin]`
-  dependency scope, so declaring `mach-glfw` for the triangle binary cascades
-  its `glfw` link requirement onto every artifact of this project — including
-  the `[lib.gl]` library and, transitively, any consumer. `mach test` and the
-  library link therefore need `libglfw` present even though no test calls it.
-  The original design isolated the demo in its own project to keep the library
-  link-free, but `mach dep pull` does not materialize `path` dependencies into
-  `dep/<alias>/` (the build then can't find the dep), so a separate
-  path-dep'd demo does not build without a hand-made symlink. Folding the demo
-  into the primary project as a `[bin]` is the working alternative, at the cost
-  of the cascade above.
+- **Function pointers are not `nil`-assignable**
+  ([octalide/mach#1369](https://github.com/octalide/mach/issues/1369)).
+  `pub var glClear: fun(u32) = nil;` is rejected by the type checker (`nil` is
+  not assignable to a function type); `mach check` accepts it best-effort but
+  a full build does not. The raw layer therefore declares each pointer
+  default-initialized (`pub var glClear: fun(u32);`), which zero-inits to a
+  `nil`-reading, assignable, callable function pointer. This is the only
+  deviation from the binding spec above and the reason the raw-layer snippet
+  drops `= nil`.
+- **`mach dep pull` silently ignores `path` dependencies**
+  ([octalide/mach#1370](https://github.com/octalide/mach/issues/1370)): the
+  dep is never materialized into `dep/<alias>/`, which the build requires, so
+  the demo's `path = "../.."` dep needs the hand-made symlink above until the
+  fix lands. CI carries the same annotated stopgap step.

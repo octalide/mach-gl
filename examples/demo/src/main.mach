@@ -1,19 +1,18 @@
-# gl.triangle: the classic OpenGL triangle, the bindings' demo binary.
+# demo.main: the classic OpenGL triangle, rendered through mach-gl.
 #
 # opens a 3.3 core-profile context with mach-glfw, loads the GL command table
 # through glfw's proc loader, compiles a shader program, uploads a triangle to
 # a VAO/VBO, animates the fill color, and closes on window close or ESC. it is
 # living documentation of load(), the wrapper idioms, and mach-glfw interop.
 #
-# this is the one binary artifact; the library layers (gl.c/enums/cmd/gl) never
-# depend on a context provider.
+# this project depends on a context provider so the binding itself never does.
 
 use std.runtime;
 use print: std.print;
 use std.types.bool.true;
 use std.types.bool.false;
 use glfw;
-use gl.gl;
+use gl;
 
 val VERT_SRC: *u8 = "#version 330 core\nlayout (location = 0) in vec3 aPos;\nvoid main() { gl_Position = vec4(aPos, 1.0); }\n";
 val FRAG_SRC: *u8 = "#version 330 core\nout vec4 FragColor;\nuniform vec4 uColor;\nvoid main() { FragColor = uColor; }\n";
