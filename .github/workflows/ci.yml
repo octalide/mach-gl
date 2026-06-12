@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+
+permissions:
+  contents: read
+
+env:
+  MACH_VERSION: v1.4.1
+
+jobs:
+  generate:
+    name: Generation drift
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check generated sources against the registry
+        run: python3 tools/gen.py check
+
+  build:
+    name: Build and test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch released mach
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$MACH_VERSION" -R octalide/mach -p mach -D /usr/local/bin
+          chmod +x /usr/local/bin/mach
+
+      # the triangle binary links glfw, and mach has no per-artifact deps, so
+      # the library test build inherits the same link requirement. ubuntu 24.04
+      # ships GLFW 3.4, which carries the symbols mach-glfw references.
+      - name: Install GLFW
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libglfw3-dev
+
+      - name: Sync dependencies
+        run: mach dep pull
+
+      - name: Test the library
+        run: mach test --lib gl
+
+      - name: Build the library and demo
+        run: |
+          set -euo pipefail
+          mach build
+          test -x out/linux/bin/triangle || { echo "::error::mach build produced no triangle binary"; exit 1; }
