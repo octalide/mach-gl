@@ -362,6 +362,7 @@ def gen_gl(cmds, enums):
     out.append("use std.runtime;")
     out.append("")
     out.append("fwd gl.c;")
+    out.append("fwd gl.c.load;")
     for name, _, _ in enums:
         out.append("fwd enums.{};".format(name))
     for name in sorted(snake(cn) for cn, _, _ in cmds):

@@ -12,6 +12,7 @@ use gl.cmd;
 use std.runtime;
 
 fwd gl.c;
+fwd gl.c.load;
 fwd enums.ACTIVE_ATOMIC_COUNTER_BUFFERS;
 fwd enums.ACTIVE_ATTRIBUTES;
 fwd enums.ACTIVE_ATTRIBUTE_MAX_LENGTH;
