@@ -59,14 +59,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libglfw3-dev
 
-      # STOPGAP for octalide/mach#1370: `mach dep pull` silently ignores path
-      # dependencies, so the demo's `path = "../.."` dep on mach-gl is never
-      # materialized into dep/mach-gl. symlink it by hand until the fix lands.
-      - name: Materialize the path dep (mach#1370 stopgap)
-        run: |
-          mkdir -p examples/demo/dep
-          ln -s ../../.. examples/demo/dep/mach-gl
-
       - name: Sync demo dependencies
         working-directory: examples/demo
         run: mach dep pull
