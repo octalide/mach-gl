@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 env:
-  MACH_VERSION: v1.4.1
+  MACH_VERSION: v1.5.0
 
 jobs:
   generate:

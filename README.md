@@ -82,11 +82,8 @@ context's proc loader. The raw layer is therefore a table of module-level
 function pointers, one per command, with the C name and C-faithful signature:
 
 ```mach
-pub var glClear: fun(u32);
+pub var glClear: fun(u32) = nil;
 ```
-
-The pointer is default-initialized (zeroed), which reads as `nil` and is the
-[one toolchain deviation](#toolchain-notes) from a literal `= nil`.
 
 `load` fills the table from a caller-supplied loader. Commands the running
 context does not export stay `nil`; calling one is the same contract as in C
@@ -167,26 +164,9 @@ Paths that need a live context are exercised by the demo, not `mach test`.
 
 ## Demo
 
-`examples/demo` is its own Mach project (git deps on mach-gl and mach-glfw,
-tracking `branch/main`) so the binding itself never depends on a context
-provider. It opens a 3.3 core-profile context, `gl.load`s through glfw's proc
+`examples/demo` is its own Mach project (a `path` dep on the repo root for
+mach-gl, a git dep on mach-glfw) so the binding itself never depends on a
+context provider. It opens a 3.3 core-profile context, `gl.load`s through glfw's proc
 loader, compiles a shader program, uploads a triangle to a VAO/VBO, animates
 the fill color, and closes on window close or ESC. It cannot run headless;
 building it (`mach build` in `examples/demo`) is the verification.
-
-## Toolchain notes
-
-- **Function pointers are not `nil`-assignable**
-  ([octalide/mach#1369](https://github.com/octalide/mach/issues/1369)).
-  `pub var glClear: fun(u32) = nil;` is rejected by the type checker (`nil` is
-  not assignable to a function type); `mach check` accepts it best-effort but
-  a full build does not. The raw layer therefore declares each pointer
-  default-initialized (`pub var glClear: fun(u32);`), which zero-inits to a
-  `nil`-reading, assignable, callable function pointer. This is the only
-  deviation from the binding spec above and the reason the raw-layer snippet
-  drops `= nil`.
-- **`mach dep pull` silently ignores `path` dependencies**
-  ([octalide/mach#1370](https://github.com/octalide/mach/issues/1370)): the
-  dep is never materialized into `dep/<alias>/`, which the build requires.
-  The demo therefore depends on mach-gl over git rather than a `path` dep on
-  `../..`; a local checkout is one `ref` edit away if the fix lands.

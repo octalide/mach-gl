@@ -16,8 +16,7 @@ abi = "sysv64"
 entry = "main.mach"
 
 [deps.mach-gl]
-git = "https://github.com/octalide/mach-gl"
-ref = "branch/main"
+path = "../.."
 
 [deps.mach-glfw]
 git = "https://github.com/octalide/mach-glfw"
