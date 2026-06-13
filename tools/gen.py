@@ -205,7 +205,7 @@ def gen_c(cmds):
     out.append("")
     for cn, ret, params in cmds:
         out.append("# {}: loaded pointer for the GL command {}.".format(cn, cn))
-        out.append("pub var {}: {};".format(cn, fun_type(ret, params)))
+        out.append("pub var {}: {} = nil;".format(cn, fun_type(ret, params)))
     out.append("")
     out.append("# load: resolve every core command through loader.")
     out.append("# ---")
