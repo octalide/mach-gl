@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 env:
-  MACH_VERSION: v2.0.0
+  MACH_VERSION: v2.0.1
 
 jobs:
   generate:
@@ -30,8 +30,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download "$MACH_VERSION" -R octalide/mach -p mach -D /usr/local/bin
-          chmod +x /usr/local/bin/mach
+          set -euo pipefail
+          mkdir -p /tmp/machdl
+          gh release download "$MACH_VERSION" -R octalide/mach \
+            -p 'mach-*-x86_64-linux.tar.gz' -D /tmp/machdl --clobber
+          tar -xzf /tmp/machdl/mach-*-x86_64-linux.tar.gz -C /tmp/machdl
+          install -m 0755 /tmp/machdl/mach /usr/local/bin/mach
+          mach info
 
       - name: Sync dependencies
         run: mach dep pull
@@ -42,9 +47,6 @@ jobs:
 
   demo:
     name: Demo Build
-    # blocked: mach-glfw has a pending 2.0.0 migration (octalide/mach-glfw#14).
-    # re-enable once that PR merges to mach-glfw/main.
-    if: false
     # ubuntu 24.04 ships GLFW 3.4, which carries the symbols mach-glfw references
     runs-on: ubuntu-24.04
     steps:
@@ -54,8 +56,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download "$MACH_VERSION" -R octalide/mach -p mach -D /usr/local/bin
-          chmod +x /usr/local/bin/mach
+          set -euo pipefail
+          mkdir -p /tmp/machdl
+          gh release download "$MACH_VERSION" -R octalide/mach \
+            -p 'mach-*-x86_64-linux.tar.gz' -D /tmp/machdl --clobber
+          tar -xzf /tmp/machdl/mach-*-x86_64-linux.tar.gz -C /tmp/machdl
+          install -m 0755 /tmp/machdl/mach /usr/local/bin/mach
+          mach info
 
       - name: Install GLFW
         run: |
