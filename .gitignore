@@ -1,1 +1,4 @@
 out/
+
+# demo path-dep on the repo root, materialized by `mach dep pull`
+/examples/demo/dep/mach-gl
