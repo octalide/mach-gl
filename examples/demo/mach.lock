@@ -6,6 +6,6 @@ ref = "branch/main"
 commit = "95d20c9423fa0ec1f9b689dcc56dba6b8f941642"
 
 [deps.mach-std]
-url = "https://github.com/octalide/mach-std"
+url = "https://github.com/briar-systems/mach-std"
 ref = "branch/main"
 commit = "39d188b6830af57497ae9e82c42066fb121fcf0d"

@@ -28,5 +28,5 @@ abi = "sysv64"
 entry = "gl.mach"
 
 [deps.mach-std]
-git = "https://github.com/octalide/mach-std"
+git = "https://github.com/briar-systems/mach-std"
 ref = "branch/main"
