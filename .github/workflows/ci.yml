@@ -7,9 +7,6 @@ on:
 permissions:
   contents: read
 
-env:
-  MACH_VERSION: v2.4.0
-
 jobs:
   generate:
     name: Generation drift
@@ -32,7 +29,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/machdl
-          gh release download "$MACH_VERSION" -R briar-systems/mach \
+          gh release download -R briar-systems/mach \
             -p 'mach-*-x86_64-linux.tar.gz' -D /tmp/machdl --clobber
           tar -xzf /tmp/machdl/mach-*-x86_64-linux.tar.gz -C /tmp/machdl
           install -m 0755 /tmp/machdl/mach /usr/local/bin/mach
@@ -43,7 +40,7 @@ jobs:
 
       # the binding links nothing: no system GL, no glfw, no display.
       - name: Test
-        run: mach test
+        run: mach test .
 
   demo:
     name: Demo Build
@@ -58,7 +55,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/machdl
-          gh release download "$MACH_VERSION" -R briar-systems/mach \
+          gh release download -R briar-systems/mach \
             -p 'mach-*-x86_64-linux.tar.gz' -D /tmp/machdl --clobber
           tar -xzf /tmp/machdl/mach-*-x86_64-linux.tar.gz -C /tmp/machdl
           install -m 0755 /tmp/machdl/mach /usr/local/bin/mach
@@ -77,5 +74,5 @@ jobs:
         working-directory: examples/demo
         run: |
           set -euo pipefail
-          mach build
+          mach build .
           test -x out/linux/bin/demo || { echo "::error::mach build produced no demo binary"; exit 1; }

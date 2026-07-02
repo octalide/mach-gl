@@ -8,4 +8,4 @@ commit = "56ee66548febe1420c6c254c371bb985b230d02a"
 [deps.mach-std]
 url = "https://github.com/briar-systems/mach-std"
 ref = "branch/main"
-commit = "39d188b6830af57497ae9e82c42066fb121fcf0d"
+commit = "991e20b5284675244443dd8b85b81fef3b1bfb96"

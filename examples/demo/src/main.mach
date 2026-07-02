@@ -49,7 +49,7 @@ fun compile(kind: u32, src: *u8) u32 {
     ret shader;
 }
 
-`symbol("main")`
+#[symbol("main")]
 fun main(argc: i64, argv: **u8) i64 {
     glfw.set_error_callback(on_error);
     if (!glfw.init()) {
