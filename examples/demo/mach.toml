@@ -19,7 +19,7 @@ entry = "main.mach"
 path = "../.."
 
 [deps.mach-glfw]
-git = "https://github.com/octalide/mach-glfw"
+git = "https://github.com/briar-systems/mach-glfw"
 ref = "branch/main"
 
 [deps.mach-std]

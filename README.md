@@ -31,7 +31,7 @@ loader the consumer provides (`glfwGetProcAddress` or any equivalent), so
 
 ```toml
 [deps.mach-gl]
-git = "https://github.com/octalide/mach-gl"
+git = "https://github.com/briar-systems/mach-gl"
 ref = "branch/main"
 ```
 
@@ -53,7 +53,7 @@ ref = "branch/main"
   matrix stack, ...).
 - Extensions (`GL_ARB_*`, ...) — only commands and enums promoted to core.
 - OpenGL ES / SC.
-- A windowing or context layer — that is [mach-glfw](https://github.com/octalide/mach-glfw)'s job.
+- A windowing or context layer — that is [mach-glfw](https://github.com/briar-systems/mach-glfw)'s job.
 
 ## Architecture
 
