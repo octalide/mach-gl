@@ -1,4 +1,4 @@
 out/
 
-# demo path-dep on the repo root, materialized by `mach dep pull`
-/examples/demo/dep/mach-gl
+# mach dep checkouts materialized by `mach dep pull`; mach.lock is the source of truth
+dep/
