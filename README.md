@@ -51,9 +51,9 @@ ref = "branch/main"
 
 - The compatibility profile and anything core 4.6 removed (`glBegin`,
   matrix stack, ...).
-- Extensions (`GL_ARB_*`, ...) — only commands and enums promoted to core.
+- Extensions (`GL_ARB_*`, ...): only commands and enums promoted to core.
 - OpenGL ES / SC.
-- A windowing or context layer — that is [mach-glfw](https://github.com/briar-systems/mach-glfw)'s job.
+- A windowing or context layer: [mach-glfw](https://github.com/briar-systems/mach-glfw)'s job.
 
 ## Architecture
 
@@ -72,7 +72,7 @@ tools/
   gl.xml        pinned Khronos registry snapshot
 ```
 
-### Raw layer — `gl.c`
+### Raw layer: `gl.c`
 
 OpenGL commands cannot be linked: implementations export them only through a
 context's proc loader. The raw layer is therefore a table of module-level
@@ -87,8 +87,10 @@ context does not export stay `nil`; calling one is the same contract as in C
 (don't call what the context version doesn't provide).
 
 ```mach
-# load: resolve every GL command through loader. returns the number of
-# commands resolved; commands the context does not export remain nil.
+# resolve every core command through loader
+# ---
+# loader: maps a command name to its address, or nil if unsupported
+# ret:    the number of commands resolved; unresolved pointers stay nil
 pub fun load(loader: fun(*u8) ptr) i64;
 ```
 
@@ -124,13 +126,13 @@ API onto one namespace.
 - One convenience helper with no C counterpart: `version(?major, ?minor)`,
   sugar over `get_integerv`, valid after `load`.
 
-Error model — GL's own, not `Result`: `get_error()` wraps `glGetError`, and
+Error model is GL's own, not `Result`: `get_error()` wraps `glGetError`, and
 the 4.3 debug-callback path (`debug_message_callback`) is available on
 contexts that have it. This mirrors mach-glfw's rationale: GL already has a
 complete error model, and a `Result` wrap would cost ergonomics without
 adding information.
 
-### Library surface — `gl.gl`
+### Library surface: `gl.gl`
 
 `gl.mach` re-exports every public symbol of `enums` and `cmd`, plus `c` as a
 module (`fwd gl.c;`) so the raw table stays reachable as `gl.c.glClear` for
@@ -154,7 +156,7 @@ pin and the committed bindings cannot drift apart.
 ## Tests
 
 `test` blocks are display-free: enum spot-checks against registry values,
-`load` with a stub loader (counts requests, returns nil — the table must
+`load` with a stub loader (counts requests, returns nil; the table must
 stay nil and report 0), and a call through the table into a Mach-implemented
 fake command, which pins the loaded-pointer call ABI without a GL context.
 Paths that need a live context are exercised by downstream consumers, not
