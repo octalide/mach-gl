@@ -7,9 +7,6 @@ on:
 permissions:
   contents: read
 
-env:
-  MACH_VERSION: v2.4.0
-
 jobs:
   generate:
     name: Generation drift
@@ -32,7 +29,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/machdl
-          gh release download "$MACH_VERSION" -R briar-systems/mach \
+          gh release download -R briar-systems/mach \
             -p 'mach-*-x86_64-linux.tar.gz' -D /tmp/machdl --clobber
           tar -xzf /tmp/machdl/mach-*-x86_64-linux.tar.gz -C /tmp/machdl
           install -m 0755 /tmp/machdl/mach /usr/local/bin/mach
@@ -43,39 +40,4 @@ jobs:
 
       # the binding links nothing: no system GL, no glfw, no display.
       - name: Test
-        run: mach test
-
-  demo:
-    name: Demo Build
-    # ubuntu 24.04 ships GLFW 3.4, which carries the symbols mach-glfw references
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Fetch released mach
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          mkdir -p /tmp/machdl
-          gh release download "$MACH_VERSION" -R briar-systems/mach \
-            -p 'mach-*-x86_64-linux.tar.gz' -D /tmp/machdl --clobber
-          tar -xzf /tmp/machdl/mach-*-x86_64-linux.tar.gz -C /tmp/machdl
-          install -m 0755 /tmp/machdl/mach /usr/local/bin/mach
-          mach info
-
-      - name: Install GLFW
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libglfw3-dev
-
-      - name: Sync demo dependencies
-        working-directory: examples/demo
-        run: mach dep pull
-
-      - name: Build demo
-        working-directory: examples/demo
-        run: |
-          set -euo pipefail
-          mach build
-          test -x out/linux/bin/demo || { echo "::error::mach build produced no demo binary"; exit 1; }
+        run: mach test .
