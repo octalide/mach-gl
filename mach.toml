@@ -1,7 +1,5 @@
 [project]
 id = "gl"
-name = "Mach OpenGL bindings"
-description = "Mach OpenGL bindings"
 version = "0.3.0"
 src = "src"
 out = "out/{target.name}/{profile.name}"
@@ -23,15 +21,19 @@ abi = "sysv64"
 
 [profile.debug]
 opt = 0
+debug = true
 
 [profile.release]
 opt = 2
+debug = false
 
 [artifact.gl]
 kind = "static"
 entry = "gl.mach"
 out = "lib/gl"
 targets = ["*"]
+link = []
+need = []
 
 [dep.mach-std]
 git = "https://github.com/briar-systems/mach-std"
